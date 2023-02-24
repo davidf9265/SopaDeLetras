@@ -1,10 +1,10 @@
-const {transpose } = require('mathjs')
+const { transpose } = require('mathjs')
+const lodash = require('lodash')
 
-const example_soup = ["S O L", "U N O", "N U T"];
-
-
+const example_soup = ["S O L", "U N O", "N U T"]; // input example, edit here to change the input
 const words2search = ["SUN", "SOL", "LOT", "ONU", "RAY"];
 
+// method to prepare matrix
 function soup_middleware(soup){
     let soup_array = [];
     
@@ -15,6 +15,14 @@ function soup_middleware(soup){
     return soup_array;
 }
 
+function inclusiveRange(start, end) {
+    if(start > end){
+        return lodash.range(start, end-1);
+    }else if (end > start){
+        return lodash.range(start, end+1);
+    }
+}
+
 class Word{
     constructor(word, beginLoc, endLoc){
         this.word = word;
@@ -22,107 +30,100 @@ class Word{
         this.beginloc = beginLoc; 
         this.endloc = endLoc;
     }
+
+    display(){
+        if(this.beginloc[0] == this.endloc[0]){
+            // Horizontal
+            const arr_indexes = inclusiveRange(this.beginloc[1], this.endloc[1])
+            this.word.split('').forEach((letter, index) => {
+                console.log(`${letter} - [${this.beginloc[0]}, ${arr_indexes[index]}]`)
+            })
+        }else if(this.beginloc[1] == this.endloc[1]){
+            // Vertical
+            const arr_indexes = inclusiveRange(this.beginloc[0], this.endloc[0])
+            this.word.split('').forEach((letter, index) => {
+                console.log(`${letter} - [${arr_indexes[index]},${this.beginloc[1]}]`)
+            })
+        }
+        return;
+    }
 }
 
-//     identify(soup){
-//         if(w_to_find == this.word){
-//             this.word.map(letter => {
-//                 soup.map(row => {
-//                     row.
-//             return true;
-//         }else{
-//             return false;
-//         }
-//     }
-// }
-
-function main(soup){
-    // console.log("Hello World");
-    // console.log(example_soup);
-    // console.log(example_soup[0][0]);
-    // console.log(example_soup[1]);
-    // console.log(example_soup[2]);
-
-    
+function main(soup){    
     let splitted_soup = soup_middleware(soup) // ordered matrix
     let transposed_soup = transpose(splitted_soup) //transposed matrix
 
-    console.log(transposed_soup)
-
-    let results = [];
-
-    // words2search.some(word => {
-    //     console.log(word);
-    //     soup_middleware(splitted_soup).some(row => {
-    //         console.log(row);
-    //         row.some(letter => {
-    //             console.log(letter);
-    //             if(letter == word[0]){
-    //                 console.log("Found letter");
-    //             }
-    //         })
-    //     }
-    // });
-
-    // alphabet till m
-    // let wowo = ['a','b','c','d', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm'].map(letter => letter.toUpperCase()).join('');
-    
+    let results = []; // array to store all info from found words    
     
     // iterate for each word
-    words2search.forEach(word => {
+    words2search.forEach((word, word_index) => {
+        console.log("*************************")
         console.log("Looking for word: " + word)
+
         // normal matrix
         splitted_soup.map((row, row_index) => {
             if(row.join('').includes(word)){
-                console.log("Found word " + word + " in normal matrix");
+                // console.log("Found word " + word + " in normal matrix");
                 let beginLoc = row.join('').indexOf(word);
-                console.log([row_index,beginLoc])
-                console.log([row_index,beginLoc + word.length])
                 results.push(
-                    new Word(word, [row_index,beginLoc], [row_index, beginLoc + word.length])
+                    new Word(word, [row_index,beginLoc], [row_index,beginLoc + (word.length - 1)])
                 )
+                console.log(results[word_index].word);
+                results[word_index].display();
             }
         })
 
         // normal matrix reversed
-        splitted_soup.map((row) => {
-            // console.log(row)
-            
+        splitted_soup.map((row, row_index) => {            
             let temprow = [...row].reverse().join('');
-            // temprow = row.join('')
+
             if(temprow.includes(word)) {
-                console.log("Found word " + word + " in normal reversed matrix")
-                console.log([row_index,beginLoc])
-                console.log([row_index,beginLoc + word.length])
+                // console.log("Found word " + word + " in normal reversed matrix")
+                let beginLoc = temprow.indexOf(word);
                 results.push(
-                    new Word(word, [row_index,beginLoc], [row_index, beginLoc + word.length])
+                    new Word(word, [row_index,beginLoc + (word.length - 1)], [row_index, beginLoc])
                 )
+                console.log(results[word_index].word);
+                results[word_index].display();
+            }
+        })
+
+        // transposed matrix
+        transposed_soup.map((row, row_index) => {
+            // console.log(row)
+            if(row.join('').includes(word)){
+                // console.log("Found word " + word + " in transposed matrix") 
+                let beginLoc = row.join('').indexOf(word);
+                results.push(
+                    new Word(word, [beginLoc,row_index], [beginLoc+(word.length - 1),row_index])
+                )
+                console.log(results[word_index].word);
+                results[word_index].display();
             }
         })
 
         // transposed matrix
         transposed_soup.map((row) => {
             // console.log(row)
-            row.join('').includes(word) ? 
-            (
-                console.log("Found word " + word + " in transposed matrix") 
-            ) : null;
-        })
-
-        // transposed matrix
-        transposed_soup.map((row) => {
-            // console.log(row)
             let temprow = [...row].reverse().join('');
-            temprow.includes(word) ? 
-            (
+            if(temprow.includes(word)){
                 console.log("Found word " + word + " in transposed reversed matrix") 
-            ) : null;
+                let beginLoc = temprow.indexOf(word);
+                console.log([beginLoc+word.length,row_index])
+                console.log([beginLoc,row_index])
+                results.push(
+                    new Word(word, [row_index,beginLoc  + (word.length - 1)], [row_index, beginLoc])
+                )
+                console.log(results[word_index].word);
+                results[word_index].display();
+            }
         })
+
+        if(!results.some(result => result.word == word)){
+            console.log("Word not found")
+        }
     });
-
-    // console.log(wowo.indexOf('EFG'));
-    // console.log(wowo)
-
+    
 }
 
-main(example_soup);
+main(example_soup); // or edit here to change the input
